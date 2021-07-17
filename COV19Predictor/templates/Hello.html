@@ -228,67 +228,14 @@
 
         }
         confirmedActual = parseDate(getActualConfirmed(), 'date', 'confirmed')
-        Highcharts.chart('container', {
-            tooltip: {
-                xDateFormat: '%d/%m/%Y',
-                shared: true,
-                split: true,
-                enabled: true
-            },
-            chart: {
-                type: 'line',
-                zoomType: 'x'
-            },
-            title: {
-                text: 'Number of Egypt actual confirmed cases \n vs predicted cases'
-            },
-            subtitle: {
-                text: 'Source: Johns Hopkins University'
-            },
-            yAxis: {
-                title: {
-                    text: 'Confirmed Cases'
-                },
-            },
-            xAxis: {
+        Highcharts.chart('container', configGraph(confirmedActual,'#ff8f00',confirmedPrediction,'#007f05'));
 
-                type: 'datetime',
-                plotLines: [{
-                    color: '#181414',
-                    width: 2,
-                    value: confirmedPrediction[0][0],
-                    dashStyle: 'ShortDot'
-                }]
-            },
-            legend: {
-                layout: 'horizontal',
-                align: 'center',
-                verticalAlign: 'bottom',
-                x: 0,
-                y: 0
-            },
-            series: [{
-                name: "Actual Confirmed Cases",
-                data: confirmedActual,
-                color: '#ff8f00',
-            }, {
-                name: "Forecast Confirmed Cases",
-                data: confirmedPrediction,
-                dashStyle: 'longdash',
-                color: '#007f05'
-            }],
-
-        });
         populateForecastingTable(confirmedPrediction, '#confirmed-cases')
         constructDeathGraph(deathPredcition)
     }
 
-
-    function constructDeathGraph(dathPrediction) {
-
-        var deathActual = parseDate(getActualDeath(), 'date', 'death')
-
-        Highcharts.chart('container2', {
+    function configGraph(actualData,ActualDataSerierscolor,PredictionData,PredictionDataDataSerierscolor){
+         config = {
             tooltip: {
                 xDateFormat: '%d/%m/%Y',
                 shared: true,
@@ -316,7 +263,7 @@
                 plotLines: [{
                     color: '#181414',
                     width: 2,
-                    value: dathPrediction[0][0],
+                    value: PredictionData[0][0],
                     dashStyle: 'ShortDot'
                 }]
             },
@@ -329,14 +276,14 @@
             },
             series: [{
                 name: "Actual Death Cases",
-                data: deathActual,
-                color: '#db0000',
+                data: actualData,
+                color: ActualDataSerierscolor ,
             },
                 {
                     name: "Forecast Death Cases",
-                    data: dathPrediction,
+                    data: PredictionData,
                     dashStyle: 'longdash',
-                    color: '#280000'
+                    color: PredictionDataDataSerierscolor
                 }]
             , plotOptions: {
                 series: {
@@ -347,8 +294,17 @@
                     },
                 }
             },
-        });
-        populateForecastingTable(dathPrediction, "#death-cases")
+        }
+
+        return config
+
+    }
+    function constructDeathGraph(dethPrediction) {
+
+        var deathActual = parseDate(getActualDeath(), 'date', 'death')
+
+        Highcharts.chart('container2', configGraph(deathActual,'#db0000',dethPrediction,'#280000'));
+        populateForecastingTable(dethPrediction, "#death-cases")
     }
 
     function constructRecoveredGraph() {
