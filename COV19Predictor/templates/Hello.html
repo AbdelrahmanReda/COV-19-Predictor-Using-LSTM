@@ -82,8 +82,22 @@
                     <h4>Daily Death/ Forecast</h4>
                 </div>
                 <div class="card-body">
-
                     <div id="container2" style="width:100%; height:400px;"></div>
+
+                    <table id="example" class="display table table-striped table-bordered" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Forecasted New Confirmed Case</th>
+
+                        </tr>
+                        </thead>
+                        <tbody id="confirmed-cases">
+
+
+                        </tbody>
+                    </table>
 
                 </div>
             </div>
@@ -100,7 +114,20 @@
                 </div>
                 <div class="card-body">
 
-                    <div id="container3" style="width:100%; height:400px;"></div>
+                    <table id="example2" class="display table table-striped table-bordered" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Forecasted New Death Case</th>
+
+                        </tr>
+                        </thead>
+                        <tbody id="death-cases">
+
+
+                        </tbody>
+                    </table>
 
                 </div>
             </div>
@@ -113,7 +140,19 @@
 </html>
 <script>
     $(document).ready(function () {
+
         $('.buttons-csv').addClass('btn-primary')
+
+
+        $('#example2').DataTable(
+            {
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ]
+            }
+        );
+
         $('#example').DataTable(
             {
                 dom: 'Bfrtip',
@@ -138,21 +177,41 @@
 
 
     function PopulateConfirmedCasesTable(predictedDate) {
-        for (let i = 0; i < predictedDate['date'].length; i++) {
+        console.log(predictedDate)
+        for (let i = 0; i < predictedDate.length; i++) {
             tableRow = document.createElement('tr')
             CounterData = document.createElement('td')
             dateData = document.createElement('td')
             newConfirmedData = document.createElement('td')
             CounterData.append(i + 1)
-            dateData.append(predictedDate['date'][i])
-            newConfirmedData.append(predictedDate['forecast-confirmed'][i])
+            dateData.append(predictedDate[i][0])
+            newConfirmedData.append(predictedDate[i][1])
             tableRow.append(CounterData)
             tableRow.append(dateData)
             tableRow.append(newConfirmedData)
-
             $("#confirmed-cases").prepend(tableRow)
         }
     }
+
+
+    function PopulateDeathCasesTable(predictedDate) {
+        console.log(predictedDate)
+        for (let i = 0; i < predictedDate.length; i++) {
+            tableRow = document.createElement('tr')
+            CounterData = document.createElement('td')
+            dateData = document.createElement('td')
+            newConfirmedData = document.createElement('td')
+            CounterData.append(i + 1)
+            dateData.append(predictedDate[i][0])
+            newConfirmedData.append(predictedDate[i][1])
+            tableRow.append(CounterData)
+            tableRow.append(dateData)
+            tableRow.append(newConfirmedData)
+            $("#death-cases").prepend(tableRow)
+        }
+    }
+
+
 
 
     //function to get actual data
@@ -179,38 +238,44 @@
 
     // ----------------------- //
     //functions to construct graphs
+
+
+    function parseDate(data,dateAttr="date",metric) {
+        if (metric === 'confirmed') {
+
+            console.log("yes")
+        } else if (metric === 'death') {
+            console.log("no")
+        } else {
+
+        }
+    }
+
     function constructConfirmedGraph() {
+        parseDate("confirmed")
+
         predictedDate = getPrediction()
 
-        PopulateConfirmedCasesTable(predictedDate)
 
-        var predictionDataList = []
-          var deathPredcition = []
+        var confirmedPrediction = []
+        var deathPredcition = []
 
         for (let i = 0; i < predictedDate['date'].length; i++) {
-
-            predictionDataList.push([new Date(predictedDate['date'][i]).getTime(), predictedDate['forecast-confirmed'][i]])
-            deathPredcition.push([new Date(predictedDate['date'][i]).getTime(), 6.74423 +predictedDate['forecast-confirmed'][i]*0.0451])
+            confirmedPrediction.push([new Date(predictedDate['date'][i]).getTime(), predictedDate['forecast-confirmed'][i]])
+            deathPredcition.push([new Date(predictedDate['date'][i]).getTime(), 6.74423 + predictedDate['forecast-confirmed'][i] * 0.0451])
         }
 
-        console.log(predictionDataList)
         wholeData = getActualConfirmed()
         var dataBeingpassed = []
-
-
         for (let i = 0; i < wholeData['date'].length; i++) {
             dataBeingpassed.push([new Date(wholeData['date'][i]).getTime(), wholeData['confirmed'][i]])
-
         }
-
         Highcharts.chart('container', {
-
             tooltip: {
                 xDateFormat: '%d/%m/%Y',
                 shared: true,
                 split: true,
                 enabled: true
-
             },
             chart: {
                 type: 'line',
@@ -234,7 +299,7 @@
                 plotLines: [{
                     color: '#181414',
                     width: 2,
-                    value: predictionDataList[0][0],
+                    value: confirmedPrediction[0][0],
                     dashStyle: 'ShortDot'
                 }]
             },
@@ -252,24 +317,21 @@
             },
                 {
                     name: "Forecast Confirmed Cases",
-                    data: predictionDataList,
+                    data: confirmedPrediction,
                     dashStyle: 'longdash',
                     color: '#007f05'
                 }],
 
         });
-
-
+        PopulateConfirmedCasesTable(confirmedPrediction)
         constructDeathGraph(deathPredcition)
     }
 
 
-
-
-
     function constructDeathGraph(dathPrediction) {
         DaethActualData = getActualDeath()
-        var deathActual= []
+        PopulateDeathCasesTable(dathPrediction)
+        var deathActual = []
 
 
         for (let i = 0; i < DaethActualData['date'].length; i++) {
@@ -293,8 +355,7 @@
                     text: 'Death Cases'
                 }
             },
-                  xAxis: {
-
+            xAxis: {
                 type: 'datetime',
                 plotLines: [{
                     color: '#181414',
@@ -313,13 +374,13 @@
             series: [{
                 name: "Actual Death Cases",
                 data: deathActual,
-                color: '#ff8f00',
+                color: '#db0000',
             },
                 {
-                    name: "Forecast Confirmed Cases",
+                    name: "Forecast Death Cases",
                     data: dathPrediction,
                     dashStyle: 'longdash',
-                    color: '#007f05'
+                    color: '#280000'
                 }]
             , plotOptions: {
                 series: {
@@ -358,9 +419,11 @@
             },
 
             legend: {
-                layout: 'vertical',
-                align: 'right',
-                verticalAlign: 'middle'
+                layout: 'horizontal',
+                align: 'center',
+                verticalAlign: 'bottom',
+                x: 0,
+                y: 0
             },
             series: [
                 {
