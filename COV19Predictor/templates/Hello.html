@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% load static %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="{% static 'style.css' %}?version=1">
+
+<script src="https://code.highcharts.com/highcharts.src.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+        crossorigin="anonymous"></script>
+
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
+<script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
+
+<script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js "></script>
+<script src=" https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src=" https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src=" https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src=" https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+<script src=" https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Daily Confirmed Cases/ Forecast</h4>
+                </div>
+                <div class="card-body">
+
+                    <div class="alert alert-warning">
+                        <div class="icon hidden-xs " style="background-color: #c82630">
+                            <svg style=" width: 30px; color: white;" aria-hidden="true" focusable="false"
+                                 data-prefix="fas" data-icon="exclamation-triangle" role="img"
+                                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"
+                                 class="svg-inline--fa fa-exclamation-triangle fa-w-18">
+                                <path fill="currentColor"
+                                      d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                                      class=""></path>
+                            </svg>
+                        </div>
+                        <strong>Warning</strong>
+                        <Br/> Al-adha eid is comming!, and a noticeable increase in infection is expected, take care of
+                        your health
+                    </div>
+
+                    <div id="container" style="width:100%; height:400px;"></div>
+                    <table id="example" class="display table table-striped table-bordered" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Forecasted New Confirmed Case</th>
+
+                        </tr>
+                        </thead>
+                        <tbody id="confirmed-cases">
+
+
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Daily Death/ Forecast</h4>
+                </div>
+                <div class="card-body">
+
+                    <div id="container2" style="width:100%; height:400px;"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Daily Recovered/ Forecast</h4>
+                </div>
+                <div class="card-body">
+
+                    <div id="container3" style="width:100%; height:400px;"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
+<script>
+    $(document).ready(function () {
+        $('.buttons-csv').addClass('btn-primary')
+        $('#example').DataTable(
+            {
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ]
+            }
+        );
+    });
+
+
+    $.fn.dataTable.Buttons.defaults.dom.button.className = 'btn btn-primary mtb-5';
+
+
+    //functions to get forecast
+    function getPrediction() {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", 'http://127.0.0.1:8000/forecastConfirmedCases/', false); // false for synchronous request
+        xmlHttp.send(null);
+        return JSON.parse(xmlHttp.response);
+    }
+
+
+    function PopulateConfirmedCasesTable(predictedDate) {
+        for (let i = 0; i < predictedDate['date'].length; i++) {
+            tableRow = document.createElement('tr')
+            CounterData = document.createElement('td')
+            dateData = document.createElement('td')
+            newConfirmedData = document.createElement('td')
+            CounterData.append(i + 1)
+            dateData.append(predictedDate['date'][i])
+            newConfirmedData.append(predictedDate['forecast-confirmed'][i])
+            tableRow.append(CounterData)
+            tableRow.append(dateData)
+            tableRow.append(newConfirmedData)
+
+            $("#confirmed-cases").prepend(tableRow)
+        }
+    }
+
+
+    //function to get actual data
+    function getActualConfirmed() {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", 'http://127.0.0.1:8000/getActualConfirmed/', false); // false for synchronous request
+        xmlHttp.send(null);
+        return JSON.parse(xmlHttp.response);
+    }
+
+    function getActualRecovered() {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", 'http://127.0.0.1:8000/getActualRecovered/', false); // false for synchronous request
+        xmlHttp.send(null);
+        return JSON.parse(xmlHttp.response);
+    }
+
+    function getActualDeath() {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", 'http://127.0.0.1:8000/getActualDeath/', false); // false for synchronous request
+        xmlHttp.send(null);
+        return JSON.parse(xmlHttp.response);
+    }
+
+    // ----------------------- //
+    //functions to construct graphs
+    function constructConfirmedGraph() {
+        predictedDate = getPrediction()
+
+        PopulateConfirmedCasesTable(predictedDate)
+
+        var predictionDataList = []
+          var deathPredcition = []
+
+        for (let i = 0; i < predictedDate['date'].length; i++) {
+
+            predictionDataList.push([new Date(predictedDate['date'][i]).getTime(), predictedDate['forecast-confirmed'][i]])
+            deathPredcition.push([new Date(predictedDate['date'][i]).getTime(), 6.74423 +predictedDate['forecast-confirmed'][i]*0.0451])
+        }
+
+        console.log(predictionDataList)
+        wholeData = getActualConfirmed()
+        var dataBeingpassed = []
+
+
+        for (let i = 0; i < wholeData['date'].length; i++) {
+            dataBeingpassed.push([new Date(wholeData['date'][i]).getTime(), wholeData['confirmed'][i]])
+
+        }
+
+        Highcharts.chart('container', {
+
+            tooltip: {
+                xDateFormat: '%d/%m/%Y',
+                shared: true,
+                split: true,
+                enabled: true
+
+            },
+            chart: {
+                type: 'line',
+                zoomType: 'x'
+            },
+            title: {
+                text: 'Number of Egypt actual confirmed cases \n vs predicted cases'
+            },
+            subtitle: {
+                text: 'Source: Johns Hopkins University'
+            },
+            yAxis: {
+
+                title: {
+                    text: 'Confirmed Cases'
+                },
+            },
+            xAxis: {
+
+                type: 'datetime',
+                plotLines: [{
+                    color: '#181414',
+                    width: 2,
+                    value: predictionDataList[0][0],
+                    dashStyle: 'ShortDot'
+                }]
+            },
+            legend: {
+                layout: 'horizontal',
+                align: 'center',
+                verticalAlign: 'bottom',
+                x: 0,
+                y: 0
+            },
+            series: [{
+                name: "Actual Confirmed Cases",
+                data: dataBeingpassed,
+                color: '#ff8f00',
+            },
+                {
+                    name: "Forecast Confirmed Cases",
+                    data: predictionDataList,
+                    dashStyle: 'longdash',
+                    color: '#007f05'
+                }],
+
+        });
+
+
+        constructDeathGraph(deathPredcition)
+    }
+
+
+
+
+
+    function constructDeathGraph(dathPrediction) {
+        DaethActualData = getActualDeath()
+        var deathActual= []
+
+
+        for (let i = 0; i < DaethActualData['date'].length; i++) {
+
+            deathActual.push([new Date(DaethActualData['date'][i]).getTime(), DaethActualData['death'][i]])
+        }
+
+        Highcharts.chart('container2', {
+            chart: {
+                type: 'line',
+                zoomType: 'x'
+            },
+            title: {
+                text: 'Number of Egypt Death Confirmed Cases \n & Predicted Death'
+            },
+            subtitle: {
+                text: 'Source: Johns Hopkins University'
+            },
+            yAxis: {
+                title: {
+                    text: 'Death Cases'
+                }
+            },
+                  xAxis: {
+
+                type: 'datetime',
+                plotLines: [{
+                    color: '#181414',
+                    width: 2,
+                    value: dathPrediction[0][0],
+                    dashStyle: 'ShortDot'
+                }]
+            },
+            legend: {
+                layout: 'horizontal',
+                align: 'center',
+                verticalAlign: 'bottom',
+                x: 0,
+                y: 0
+            },
+            series: [{
+                name: "Actual Death Cases",
+                data: deathActual,
+                color: '#ff8f00',
+            },
+                {
+                    name: "Forecast Confirmed Cases",
+                    data: dathPrediction,
+                    dashStyle: 'longdash',
+                    color: '#007f05'
+                }]
+            , plotOptions: {
+                series: {
+                    compare: 'percent',
+                    showInNavigator: true,
+                    dataGrouping: {
+                        enabled: false
+                    },
+                }
+            },
+
+        });
+
+
+    }
+
+    function constructRecoveredGraph() {
+        DaethActualData = getActualRecovered()
+
+        Highcharts.chart('container3', {
+            chart: {
+                type: 'line',
+                zoomType: 'x'
+            },
+            title: {
+                text: 'Number of Egypt Actual Recovered Cases \n vs Predicted Cases'
+            },
+            subtitle: {
+                text: 'Source: Johns Hopkins University'
+            },
+
+            yAxis: {
+                title: {
+                    text: 'Recovered Cases'
+                }
+            },
+
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle'
+            },
+            series: [
+                {
+                    name: 'Actual Recovered Cases',
+                    data: DaethActualData['recovered']
+                }
+            ], plotOptions: {
+                series: {
+                    compare: 'percent',
+                    showInNavigator: true,
+                    dataGrouping: {
+                        enabled: false
+                    },
+                }
+            },
+
+        });
+
+    }
+
+    // ----------------------- //
+
+
+    constructConfirmedGraph()
+
+    {#constructRecoveredGraph()#}
+
+
+</script>
