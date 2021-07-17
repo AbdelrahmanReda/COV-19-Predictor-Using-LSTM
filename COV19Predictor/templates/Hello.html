@@ -31,20 +31,20 @@
     <div class="row">
         <div class="col-lg-12">
             <div class="alert alert-warning">
-                        <div class="icon hidden-xs " style="background-color: #c82630">
-                            <svg style=" width: 30px; color: white;" aria-hidden="true" focusable="false"
-                                 data-prefix="fas" data-icon="exclamation-triangle" role="img"
-                                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"
-                                 class="svg-inline--fa fa-exclamation-triangle fa-w-18">
-                                <path fill="currentColor"
-                                      d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
-                                      class=""></path>
-                            </svg>
-                        </div>
-                        <strong>Warning</strong>
-                        <Br/> Al-adha eid is comming!, and a noticeable increase in infection is expected, take care of
-                        your health
-                    </div>
+                <div class="icon hidden-xs " style="background-color: #c82630">
+                    <svg style=" width: 30px; color: white;" aria-hidden="true" focusable="false"
+                         data-prefix="fas" data-icon="exclamation-triangle" role="img"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"
+                         class="svg-inline--fa fa-exclamation-triangle fa-w-18">
+                        <path fill="currentColor"
+                              d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                              class=""></path>
+                    </svg>
+                </div>
+                <strong>Warning</strong>
+                <Br/> Al-adha eid is comming!, and a noticeable increase in infection is expected, take care of
+                your health
+            </div>
         </div>
     </div>
 </div>
@@ -60,9 +60,8 @@
                 <div class="card-body">
 
 
-
                     <div id="container" style="width:100%; height:400px;"></div>
-                    <table id="example" class="display table table-striped table-bordered" style="width:100%">
+                    <table id="conf-table" class="display table table-striped table-bordered" style="width:100%">
                         <thead>
                         <tr>
                             <th scope="col">#</th>
@@ -89,9 +88,9 @@
                 <div class="card-header">
                     <h4>Daily Death/ Forecast</h4>
                 </div>
-                   <div class="card-body">
+                <div class="card-body">
                     <div id="container2" style="width:100%; height:400px;"></div>
-                    <table id="example2" class="display table table-striped table-bordered" style="width:100%">
+                    <table id="death-table" class="display table table-striped table-bordered" style="width:100%">
                         <thead>
                         <tr>
                             <th scope="col">#</th>
@@ -132,9 +131,7 @@
     $(document).ready(function () {
 
         $('.buttons-csv').addClass('btn-primary')
-
-
-        $('#example2').DataTable(
+        $('#conf-table').DataTable(
             {
                 dom: 'Bfrtip',
                 buttons: [
@@ -142,8 +139,7 @@
                 ]
             }
         );
-
-        $('#example').DataTable(
+        $('#death-table').DataTable(
             {
                 dom: 'Bfrtip',
                 buttons: [
@@ -165,23 +161,7 @@
         return JSON.parse(xmlHttp.response);
     }
 
-
-    function populateForecastingTable(predictedDate, tableClassName) {
-
-        for (let i = 0; i < predictedDate.length; i++) {
-            tableRow = document.createElement('tr')
-            CounterData = document.createElement('td')
-            dateData = document.createElement('td')
-            newConfirmedData = document.createElement('td')
-            CounterData.append(i + 1)
-            dateData.append(predictedDate[i][0])
-            newConfirmedData.append(predictedDate[i][1])
-            tableRow.append(CounterData)
-            tableRow.append(dateData)
-            tableRow.append(newConfirmedData)
-            $(tableClassName).prepend(tableRow)
-        }
-    }
+    //-------------------------
 
 
     //function to get actual data
@@ -209,15 +189,6 @@
     // ----------------------- //
     //functions to construct graphs
 
-
-    function parseDate(wholeData, dateAttr = "date", metric) {
-        date = []
-        for (let i = 0; i < wholeData[dateAttr].length; i++) {
-            date.push([new Date(wholeData[dateAttr][i]).getTime(), wholeData[metric][i]])
-        }
-        return date
-    }
-
     function constructConfirmedGraph() {
         predictedDate = getPrediction()
         var confirmedPrediction = []
@@ -225,24 +196,35 @@
         for (let i = 0; i < predictedDate['date'].length; i++) {
             confirmedPrediction.push([new Date(predictedDate['date'][i]).getTime(), predictedDate['forecast-confirmed'][i]])
             deathPredcition.push([new Date(predictedDate['date'][i]).getTime(), 6.74423 + predictedDate['forecast-confirmed'][i] * 0.0451])
-
         }
         confirmedActual = parseDate(getActualConfirmed(), 'date', 'confirmed')
-        Highcharts.chart('container', configGraph(confirmedActual,'#ff8f00',confirmedPrediction,'#007f05'));
-
+        Highcharts.chart('container', configGraph(confirmedActual, '#ff8f00', confirmedPrediction, '#007f05'));
         populateForecastingTable(confirmedPrediction, '#confirmed-cases')
         constructDeathGraph(deathPredcition)
     }
 
-    function configGraph(actualData,ActualDataSerierscolor,PredictionData,PredictionDataDataSerierscolor){
-         config = {
+    function constructDeathGraph(dethPrediction) {
+        var deathActual = parseDate(getActualDeath(), 'date', 'death')
+        Highcharts.chart('container2', configGraph(deathActual, '#db0000', dethPrediction, '#280000'));
+        populateForecastingTable(dethPrediction, "#death-cases")
+    }
+
+    function parseDate(wholeData, dateAttr = "date", metric) {
+        parsedDate = []
+        for (let i = 0; i < wholeData[dateAttr].length; i++) {
+            parsedDate.push([new Date(wholeData[dateAttr][i]).getTime(), wholeData[metric][i]])
+        }
+        return parsedDate
+    }
+
+    function configGraph(actualData, ActualDataSerierscolor, PredictionData, PredictionDataDataSerierscolor) {
+        config = {
             tooltip: {
                 xDateFormat: '%d/%m/%Y',
                 shared: true,
                 split: true,
                 enabled: true
             },
-
             chart: {
                 type: 'line',
                 zoomType: 'x'
@@ -277,7 +259,7 @@
             series: [{
                 name: "Actual Death Cases",
                 data: actualData,
-                color: ActualDataSerierscolor ,
+                color: ActualDataSerierscolor,
             },
                 {
                     name: "Forecast Death Cases",
@@ -295,71 +277,31 @@
                 }
             },
         }
-
         return config
-
-    }
-    function constructDeathGraph(dethPrediction) {
-
-        var deathActual = parseDate(getActualDeath(), 'date', 'death')
-
-        Highcharts.chart('container2', configGraph(deathActual,'#db0000',dethPrediction,'#280000'));
-        populateForecastingTable(dethPrediction, "#death-cases")
     }
 
-    function constructRecoveredGraph() {
-        DaethActualData = getActualRecovered()
-
-        Highcharts.chart('container3', {
-            chart: {
-                type: 'line',
-                zoomType: 'x'
-            },
-            title: {
-                text: 'Number of Egypt Actual Recovered Cases \n vs Predicted Cases'
-            },
-            subtitle: {
-                text: 'Source: Johns Hopkins University'
-            },
-
-            yAxis: {
-                title: {
-                    text: 'Recovered Cases'
-                }
-            },
-
-            legend: {
-                layout: 'horizontal',
-                align: 'center',
-                verticalAlign: 'bottom',
-                x: 0,
-                y: 0
-            },
-            series: [
-                {
-                    name: 'Actual Recovered Cases',
-                    data: DaethActualData['recovered']
-                }
-            ], plotOptions: {
-                series: {
-                    compare: 'percent',
-                    showInNavigator: true,
-                    dataGrouping: {
-                        enabled: false
-                    },
-                }
-            },
-
-        });
-
+    function populateForecastingTable(predictedDate, tableClassName) {
+        for (let i = 0; i < predictedDate.length; i++) {
+            tableRow = document.createElement('tr')
+            CounterData = document.createElement('td')
+            dateData = document.createElement('td')
+            newConfirmedData = document.createElement('td')
+            CounterData.append(i + 1)
+            date = new Date (predictedDate[i][0])
+            dateData.append(date.getDate(),'/',date.getMonth(),'/',date.getFullYear())
+            newConfirmedData.append(Math.ceil(predictedDate[i][1]))
+            tableRow.append(CounterData)
+            tableRow.append(dateData)
+            tableRow.append(newConfirmedData)
+            $(tableClassName).prepend(tableRow)
+        }
     }
+
 
     // ----------------------- //
 
 
     constructConfirmedGraph()
-
-    {#constructRecoveredGraph()#}
 
 
 </script>
