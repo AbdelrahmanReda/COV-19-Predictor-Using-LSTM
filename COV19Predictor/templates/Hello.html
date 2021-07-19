@@ -210,13 +210,7 @@
 
     /*
 
-    //functions to get forecast
-    function getPrediction() {
-        var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("GET", 'http://127.0.0.1:8000/forecastConfirmedCases/', false); // false for synchronous request
-        xmlHttp.send(null);
-        return JSON.parse(xmlHttp.response);
-    }
+
 
     //-------------------------
 
@@ -229,22 +223,6 @@
 
 
 
-    function populateForecastingTable(predictedDate, tableClassName) {
-        for (let i = 0; i < predictedDate.length; i++) {
-            tableRow = document.createElement('tr')
-            CounterData = document.createElement('td')
-            dateData = document.createElement('td')
-            newConfirmedData = document.createElement('td')
-            CounterData.append(i + 1)
-            date = new Date (predictedDate[i][0])
-            dateData.append(date.getDate(),'/',date.getMonth(),'/',date.getFullYear())
-            newConfirmedData.append(Math.ceil(predictedDate[i][1]))
-            tableRow.append(CounterData)
-            tableRow.append(dateData)
-            tableRow.append(newConfirmedData)
-            $(tableClassName).prepend(tableRow)
-        }
-    }
 
 
     */
@@ -256,45 +234,62 @@
         return JSON.parse(xmlHttp.response);
     }
 
+    //functions to get forecast
+    function getPrediction() {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", 'http://localhost:8000/forecastConfirmedCases/', false); // false for synchronous request
+        xmlHttp.send(null);
+        return JSON.parse(xmlHttp.response);
+    }
+
 
     function constructGraph() {
         egyptData = getEgyptData()
+        egyptForecastData = getPrediction()
+
 
         var actualConfirmed = []
         var actualDeath = []
         var actualRecovered = []
-        console.log(typeof (egyptData[10]['fields']['Date']))
-        for (let i = 350; i < egyptData.length; i++) {
+        var forecastConfirmed = []
+
+
+        for (let i = 520; i < egyptData.length; i++) {
 
             actualConfirmed.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['confirmed_cases']])
             actualDeath.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['death_cases']])
             actualRecovered.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['recovered_cases']])
         }
 
+        for (let i = 0; i < egyptForecastData['Date'].length; i++) {
+            forecastConfirmed.push([new Date(egyptForecastData['Date'][i]).getTime(), Math.round( egyptForecastData['Forecast'][i]) ])
+        }
 
-        console.log(actualConfirmed)
-        constructConfirmedGraph(actualConfirmed)
+
+        constructConfirmedGraph(actualConfirmed, forecastConfirmed)
+        populateForecastingTable(forecastConfirmed,'#confirmed-cases')
         constructDeathGraph(actualDeath)
         constructRecoveredGraph(actualRecovered)
     }
 
     constructGraph()
 
-    function constructConfirmedGraph(observations) {
-        Highcharts.chart('conf-container', configGraph("Actual Confiemed Cases",observations, '#002147',"Actual Confiemed Cases"));
+    function constructConfirmedGraph(observations, forecastData) {
+        console.log('forecat data is', forecastData)
+        Highcharts.chart('conf-container', configGraph("Actual Confiemed Cases", observations, '#002147', "Actual Confiemed Cases", forecastData, '#0568db', "Forecast Confirmed Cases"))
     }
 
     function constructDeathGraph(observations) {
-        Highcharts.chart('death-container', configGraph("Actual Deaths Cases",observations, '#EF1111',"Actual Deaths Cases"));
+        Highcharts.chart('death-container', configGraph("Actual Deaths Cases", observations, '#EF1111', "Actual Deaths Cases"));
     }
 
     function constructRecoveredGraph(observations) {
-        Highcharts.chart('recov-container', configGraph("Actual Recovered Cases",observations, '#01b300',"Actual Recovered Cases"));
+        Highcharts.chart('recov-container', configGraph("Actual Recovered Cases", observations, '#01b300', "Actual Recovered Cases"));
     }
 
 
-    function configGraph(title,actualData, ActualDataSerierscolor,ActualDataSeriersName) {
-        console.log(actualData)
+    function configGraph(title, actualData, ActualDataSerierscolor, ActualDataSeriersName, forecastData, forecastDataSerierscolor, forecastDataSeriersName) {
+
         config = {
             tooltip: {
                 xDateFormat: '%d/%m/%Y',
@@ -320,6 +315,7 @@
             },
             xAxis: {
                 type: 'datetime',
+
             },
             legend: {
                 layout: 'horizontal',
@@ -332,12 +328,18 @@
                 name: ActualDataSeriersName,
                 data: actualData,
                 color: ActualDataSerierscolor,
-            },]
+                dashstyle:'Dash'
+            },
+                {
+                    name: forecastDataSeriersName,
+                    data: forecastData,
+                    color: forecastDataSerierscolor,
+                },]
             , plotOptions: {
                 series: {
                     compare: 'percent',
                     showInNavigator: true,
-                    lineWidth:3,
+                    lineWidth: 3,
                     dataGrouping: {
                         enabled: false
                     },
@@ -347,24 +349,46 @@
         return config
     }
 
-/*
-    window.onscroll = function () {
-        myFunction()
+        function populateForecastingTable(predictedDate, tableClassName) {
 
-    };
-
-    var navbar = document.getElementById("my-navbar");
-    var sticky = navbar.offsetTop;
-
-    function myFunction() {
-        if (window.pageYOffset >= sticky) {
-            console.log("Hi ",navbar)
-
-            navbar.classList.add("sticky")
-
-        } else {
-            navbar.classList.remove("sticky");
+        for (let i = 0; i < predictedDate.length; i++) {
+            tableRow = document.createElement('tr')
+            CounterData = document.createElement('td')
+            dateData = document.createElement('td')
+            newConfirmedData = document.createElement('td')
+            CounterData.append(i + 1)
+            date = new Date (predictedDate[i][0])
+            dateData.append(date.getDate(),'/',date.getMonth(),'/',date.getFullYear())
+            newConfirmedData.append(Math.ceil(predictedDate[i][1]))
+            tableRow.append(CounterData)
+            tableRow.append(dateData)
+            tableRow.append(newConfirmedData)
+            console.log(tableRow)
+            console.log($(tableClassName))
+            $(tableClassName).prepend(tableRow)
         }
     }
-*/
+
+
+
+    /*
+        window.onscroll = function () {
+            myFunction()
+
+        };
+
+        var navbar = document.getElementById("my-navbar");
+        var sticky = navbar.offsetTop;
+
+        function myFunction() {
+            if (window.pageYOffset >= sticky) {
+                console.log("Hi ",navbar)
+
+                navbar.classList.add("sticky")
+
+            } else {
+                navbar.classList.remove("sticky");
+            }
+        }
+    */
 </script>
