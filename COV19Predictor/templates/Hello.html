@@ -6,7 +6,8 @@
 <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}?version=1">
 
 <script src="https://code.highcharts.com/highcharts.src.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+        crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
 <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
@@ -52,7 +53,7 @@
                     <h4>Daily Confirmed Cases/ Forecast</h4>
                 </div>
                 <div class="card-body">
-                    <div id="container" style="width:100%; height:400px;"></div>
+                    <div id="conf-container" style="width:100%; height:500px;"></div>
                     <table id="conf-table" class="display table table-striped table-bordered" style="width:100%">
                         <thead>
                         <tr>
@@ -78,7 +79,7 @@
                     <h4>Daily Death/ Forecast</h4>
                 </div>
                 <div class="card-body">
-                    <div id="container2" style="width:100%; height:400px;"></div>
+                    <div id="death-container" style="width:100%; height:400px;"></div>
                     <table id="death-table" class="display table table-striped table-bordered" style="width:100%">
                         <thead>
                         <tr>
@@ -103,6 +104,21 @@
             <div class="card">
                 <div class="card-header">
                     <h4>Daily Recovered/ Forecast</h4>
+                </div>
+                                <div class="card-body">
+                    <div id="recov-container" style="width:100%; height:400px;"></div>
+                    <table id="recoverd-table" class="display table table-striped table-bordered" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Forecasted New Recovered Case</th>
+                        </tr>
+                        </thead>
+                        <tbody id="death-cases">
+                        </tbody>
+                    </table>
+
                 </div>
 
             </div>
@@ -135,9 +151,10 @@
     });
 
 
-
     $.fn.dataTable.Buttons.defaults.dom.button.className = 'btn btn-primary mtb-5';
 
+
+    /*
 
     //functions to get forecast
     function getPrediction() {
@@ -150,61 +167,79 @@
     //-------------------------
 
 
-    //function to get actual data
-    function getActualConfirmed() {
-        var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("GET", 'http://127.0.0.1:8000/getActualConfirmed/', false); // false for synchronous request
-        xmlHttp.send(null);
-        return JSON.parse(xmlHttp.response);
-    }
 
-    function getActualRecovered() {
-        var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("GET", 'http://127.0.0.1:8000/getActualRecovered/', false); // false for synchronous request
-        xmlHttp.send(null);
-        return JSON.parse(xmlHttp.response);
-    }
 
-    function getActualDeath() {
-        var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("GET", 'http://127.0.0.1:8000/getActualDeath/', false); // false for synchronous request
-        xmlHttp.send(null);
-        return JSON.parse(xmlHttp.response);
-    }
 
-    // ----------------------- //
-    //functions to construct graphs
 
-    function constructConfirmedGraph() {
-        predictedDate = getPrediction()
-        var confirmedPrediction = []
-        var deathPredcition = []
-        console.log(predictedDate)
-        for (let i = 0; i < predictedDate['date'].length; i++) {
-            confirmedPrediction.push([new Date(predictedDate['date'][i]).getTime(), predictedDate['forecast-confirmed'][i]])
-            deathPredcition.push([new Date(predictedDate['date'][i]).getTime(), 6.74423 + predictedDate['forecast-confirmed'][i] * 0.0451])
+
+
+
+
+    function populateForecastingTable(predictedDate, tableClassName) {
+        for (let i = 0; i < predictedDate.length; i++) {
+            tableRow = document.createElement('tr')
+            CounterData = document.createElement('td')
+            dateData = document.createElement('td')
+            newConfirmedData = document.createElement('td')
+            CounterData.append(i + 1)
+            date = new Date (predictedDate[i][0])
+            dateData.append(date.getDate(),'/',date.getMonth(),'/',date.getFullYear())
+            newConfirmedData.append(Math.ceil(predictedDate[i][1]))
+            tableRow.append(CounterData)
+            tableRow.append(dateData)
+            tableRow.append(newConfirmedData)
+            $(tableClassName).prepend(tableRow)
         }
-        confirmedActual = parseDate(getActualConfirmed(), 'date', 'confirmed')
-        Highcharts.chart('container', configGraph(confirmedActual, '#ff8f00', confirmedPrediction, '#007f05'));
-        populateForecastingTable(confirmedPrediction, '#confirmed-cases')
-        constructDeathGraph(deathPredcition)
     }
 
-    function constructDeathGraph(dethPrediction) {
-        var deathActual = parseDate(getActualDeath(), 'date', 'death')
-        Highcharts.chart('container2', configGraph(deathActual, '#db0000', dethPrediction, '#280000'));
-        populateForecastingTable(dethPrediction, "#death-cases")
+
+    */
+
+    function getEgyptData() {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", 'http://localhost:8000/getegypt/', false); // false for synchronous request
+        xmlHttp.send(null);
+        return JSON.parse(xmlHttp.response);
     }
 
-    function parseDate(wholeData, dateAttr = "date", metric) {
-        parsedDate = []
-        for (let i = 0; i < wholeData[dateAttr].length; i++) {
-            parsedDate.push([new Date(wholeData[dateAttr][i]).getTime(), wholeData[metric][i]])
+
+    function constructGraph() {
+        egyptData = getEgyptData()
+
+        var actualConfirmed = []
+        var actualDeath = []
+        var actualRecovered = []
+        console.log(typeof (egyptData[10]['fields']['Date']))
+        for (let i = 350; i < egyptData.length; i++) {
+
+            actualConfirmed.push([new Date(egyptData[i]['fields']['Date']).getTime(),egyptData[i]['fields']['confirmed_cases']])
+            actualDeath.push([new Date(egyptData[i]['fields']['Date']).getTime(),egyptData[i]['fields']['death_cases']])
+            actualRecovered.push([new Date(egyptData[i]['fields']['Date']).getTime(),egyptData[i]['fields']['recovered_cases']])
         }
-        return parsedDate
+
+
+        console.log(actualConfirmed)
+        constructConfirmedGraph(actualConfirmed)
+        constructDeathGraph(actualDeath)
+        constructRecoveredGraph(actualRecovered)
     }
 
-    function configGraph(actualData, ActualDataSerierscolor, PredictionData, PredictionDataDataSerierscolor) {
+    constructGraph()
+
+    function constructConfirmedGraph(observations) {
+        Highcharts.chart('conf-container', configGraph(observations, '#ff8f00'));
+    }
+    function constructDeathGraph(observations) {
+        Highcharts.chart('death-container', configGraph(observations, '#ff8f00'));
+    }
+    function constructRecoveredGraph(observations) {
+        Highcharts.chart('recov-container', configGraph(observations, '#ff8f00'));
+    }
+
+
+
+    function configGraph(actualData, ActualDataSerierscolor) {
+        console.log(actualData)
         config = {
             tooltip: {
                 xDateFormat: '%d/%m/%Y',
@@ -229,12 +264,6 @@
             },
             xAxis: {
                 type: 'datetime',
-                plotLines: [{
-                    color: '#181414',
-                    width: 2,
-                    value: PredictionData[0][0],
-                    dashStyle: 'ShortDot'
-                }]
             },
             legend: {
                 layout: 'horizontal',
@@ -247,13 +276,7 @@
                 name: "Actual Death Cases",
                 data: actualData,
                 color: ActualDataSerierscolor,
-            },
-                {
-                    name: "Forecast Death Cases",
-                    data: PredictionData,
-                    dashStyle: 'longdash',
-                    color: PredictionDataDataSerierscolor
-                }]
+            },]
             , plotOptions: {
                 series: {
                     compare: 'percent',
@@ -267,27 +290,8 @@
         return config
     }
 
-    function populateForecastingTable(predictedDate, tableClassName) {
-        for (let i = 0; i < predictedDate.length; i++) {
-            tableRow = document.createElement('tr')
-            CounterData = document.createElement('td')
-            dateData = document.createElement('td')
-            newConfirmedData = document.createElement('td')
-            CounterData.append(i + 1)
-            date = new Date (predictedDate[i][0])
-            dateData.append(date.getDate(),'/',date.getMonth(),'/',date.getFullYear())
-            newConfirmedData.append(Math.ceil(predictedDate[i][1]))
-            tableRow.append(CounterData)
-            tableRow.append(dateData)
-            tableRow.append(newConfirmedData)
-            $(tableClassName).prepend(tableRow)
-        }
-    }
 
 
-
-
-    constructConfirmedGraph()
 
 
 </script>

@@ -40,3 +40,8 @@ class Uk(models.Model):
 class metaData (models.Model):
     Date = models.DateField('2021-07-10')
 
+class egypt_prediction(models.Model):
+    Date = models.DateField(default=datetime.date.today)
+    confirmed_cases = models.IntegerField(default=0)
+    recovered_cases = models.IntegerField(default=0)
+    death_cases = models.IntegerField(default=0)

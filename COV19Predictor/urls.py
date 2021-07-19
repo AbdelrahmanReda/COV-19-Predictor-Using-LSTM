@@ -12,7 +12,8 @@ urlpatterns = [
     path('getActualRecovered/', views.getActualRecovered),
     path('save/', views.saveCounry),
     path('checkdata/',views.checkData),
-    path('updater/',views.update_lastupadate_meta_data)
+    path('updater/',views.update_lastupadate_meta_data),
+    path('getegypt/',views.get_egypt_date)
 
 
 
