@@ -24,35 +24,89 @@
     <title>Title</title>
 </head>
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="alert alert-warning">
-                <div class="icon hidden-xs " style="background-color: #c82630">
-                    <svg style=" width: 30px; color: white;" aria-hidden="true" focusable="false"
-                         data-prefix="fas" data-icon="exclamation-triangle" role="img"
-                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"
-                         class="svg-inline--fa fa-exclamation-triangle fa-w-18">
-                        <path fill="currentColor"
-                              d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
-                              class=""></path>
-                    </svg>
+
+<nav class="navbar navbar-expand-lg  ">
+    <a class="navbar-brand" href="#">Navbar</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
+                    Dropdown
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="#">Action</a>
+                    <a class="dropdown-item" href="#">Another action</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#">Something else here</a>
                 </div>
-                <strong>Warning</strong>
-                <Br/> Al-adha eid is comming!, and a noticeable increase in infection is expected, take care of
-                your health
-            </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#">Disabled</a>
+            </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0">
+            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+    </div>
+</nav>
+
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-lg-12 disclaimer">
+    <span>
+        Our estimates now default to reported deaths in each location, which is the number of deaths officially reported as COVID-19. Select "Excess" to see the number of excess deaths related to COVID-19,<br> which is all deaths estimated as attributed to COVID-19, including unreported deaths. To learn more about our methods, please see our special analysis.
+    <br>
+        Last updated July 15, 2021 (Pacific Time)
+    </span>
+
+
         </div>
     </div>
 </div>
-<div class="container-fluid">
+
+<div class="container-fluid nav-container ">
     <div class="row">
         <div class="col-lg-12">
+            <nav id="my-navbar" class="nav nav-pills flex-column flex-sm-row">
+                <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="#">Active</a>
+                <a class="flex-sm-fill text-sm-center nav-link" href="#">Longer nav link</a>
+                <a class="flex-sm-fill text-sm-center nav-link" href="#">Link</a>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid ">
+    <div class="row">
+        <div class="col-lg-12">
+
             <div class="card">
                 <div class="card-header">
                     <h4>Daily Confirmed Cases/ Forecast</h4>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-warning">
+                        <div class="blob"></div>
+
+                        <strong>Warning</strong>
+                        <Br/> Al-adha eid is comming!, and a noticeable increase in infection is expected, take care of
+                        your health
+                    </div>
                     <div id="conf-container" style="width:100%; height:500px;"></div>
                     <table id="conf-table" class="display table table-striped table-bordered" style="width:100%">
                         <thead>
@@ -105,7 +159,7 @@
                 <div class="card-header">
                     <h4>Daily Recovered/ Forecast</h4>
                 </div>
-                                <div class="card-body">
+                <div class="card-body">
                     <div id="recov-container" style="width:100%; height:400px;"></div>
                     <table id="recoverd-table" class="display table table-striped table-bordered" style="width:100%">
                         <thead>
@@ -212,9 +266,9 @@
         console.log(typeof (egyptData[10]['fields']['Date']))
         for (let i = 350; i < egyptData.length; i++) {
 
-            actualConfirmed.push([new Date(egyptData[i]['fields']['Date']).getTime(),egyptData[i]['fields']['confirmed_cases']])
-            actualDeath.push([new Date(egyptData[i]['fields']['Date']).getTime(),egyptData[i]['fields']['death_cases']])
-            actualRecovered.push([new Date(egyptData[i]['fields']['Date']).getTime(),egyptData[i]['fields']['recovered_cases']])
+            actualConfirmed.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['confirmed_cases']])
+            actualDeath.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['death_cases']])
+            actualRecovered.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['recovered_cases']])
         }
 
 
@@ -227,18 +281,19 @@
     constructGraph()
 
     function constructConfirmedGraph(observations) {
-        Highcharts.chart('conf-container', configGraph(observations, '#ff8f00'));
+        Highcharts.chart('conf-container', configGraph("Actual Confiemed Cases",observations, '#002147',"Actual Confiemed Cases"));
     }
+
     function constructDeathGraph(observations) {
-        Highcharts.chart('death-container', configGraph(observations, '#ff8f00'));
+        Highcharts.chart('death-container', configGraph("Actual Deaths Cases",observations, '#EF1111',"Actual Deaths Cases"));
     }
+
     function constructRecoveredGraph(observations) {
-        Highcharts.chart('recov-container', configGraph(observations, '#ff8f00'));
+        Highcharts.chart('recov-container', configGraph("Actual Recovered Cases",observations, '#01b300',"Actual Recovered Cases"));
     }
 
 
-
-    function configGraph(actualData, ActualDataSerierscolor) {
+    function configGraph(title,actualData, ActualDataSerierscolor,ActualDataSeriersName) {
         console.log(actualData)
         config = {
             tooltip: {
@@ -249,10 +304,11 @@
             },
             chart: {
                 type: 'line',
-                zoomType: 'x'
+                zoomType: 'x',
+
             },
             title: {
-                text: 'Number of Egypt Death Confirmed Cases \n & Predicted Death'
+                text: title
             },
             subtitle: {
                 text: 'Source: Johns Hopkins University'
@@ -273,7 +329,7 @@
                 y: 0
             },
             series: [{
-                name: "Actual Death Cases",
+                name: ActualDataSeriersName,
                 data: actualData,
                 color: ActualDataSerierscolor,
             },]
@@ -281,6 +337,7 @@
                 series: {
                     compare: 'percent',
                     showInNavigator: true,
+                    lineWidth:3,
                     dataGrouping: {
                         enabled: false
                     },
@@ -290,8 +347,24 @@
         return config
     }
 
+/*
+    window.onscroll = function () {
+        myFunction()
 
+    };
 
+    var navbar = document.getElementById("my-navbar");
+    var sticky = navbar.offsetTop;
 
+    function myFunction() {
+        if (window.pageYOffset >= sticky) {
+            console.log("Hi ",navbar)
 
+            navbar.classList.add("sticky")
+
+        } else {
+            navbar.classList.remove("sticky");
+        }
+    }
+*/
 </script>
