@@ -1,4 +1,6 @@
 import datetime
+import os
+import time
 
 from django.core import serializers
 from django.db import connection
@@ -86,7 +88,26 @@ def getLst():
 def forecastConfirmedCases(request):
     from sklearn.preprocessing import MinMaxScaler
     import pandas as pd
-    model = load_model('./PredictionModelV3.h5')
+    forecasting_model = load_model('./PredictionModelV3.h5')
+    classification_model = load_model('./COV19ClassificationModel.h5')
+
+    weather_occasion = pd.read_csv(os.path.join(os.path.dirname(os.path.dirname(__file__)),'Egypt_Occasion_Waether_Data.csv'),index_col='Date')
+
+    print("Hi")
+
+    predictions = classification_model.predict(
+        x=weather_occasion
+        , batch_size=10
+        , verbose=0
+    )
+    print(predictions)
+    for i in predictions:
+        print(i)
+    rounded_predictions = np.argmax(predictions, axis=-1).tolist()
+    weather_occasion['predictions'] = rounded_predictions
+
+    print(weather_occasion)
+
     egypt = Uk.objects.all()
     date = []
     confirmed = []
@@ -111,7 +132,7 @@ def forecastConfirmedCases(request):
 
     for i in range(len(test_set) + 21):
         # get the prediction value for the first batch
-        current_pred = model.predict(current_batch)[0]
+        current_pred = forecasting_model.predict(current_batch)[0]
         # append the prediction into the array
         test_predictions.append(current_pred)
         forecast_date.append(str(date_time_obj))
@@ -124,7 +145,7 @@ def forecastConfirmedCases(request):
         "Date": forecast_date,
         "Forecast": sum(true_predictions.tolist(), [])
     }
-
+    time.sleep(10)
     return JsonResponse(x)
 
 
