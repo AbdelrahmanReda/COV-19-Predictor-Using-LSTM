@@ -85,6 +85,53 @@ def getLst():
     return 0
 
 
+import itertools as it
+
+
+def find_ranges(lst, n=4 , number = 1):
+    """Return ranges for `n` or more repeated values."""
+    groups = ((k, tuple(g)) for k, g in it.groupby(enumerate(lst), lambda x: x[-1]))
+    repeated = (idx_g for k, idx_g in groups if len(idx_g) >=n)
+    rebeats = ((sub[0][0], sub[-1][0]) for sub in repeated)
+    one_rebeats = []
+    for r in rebeats:
+        if lst[r[0]]==1:
+            one_rebeats.append(r)
+
+
+
+
+
+
+
+    return one_rebeats
+
+
+
+
+
+
+
+
+def adjustForecast(unadjusted_forecast,adjusted_helper):
+
+    start_inx= list(find_ranges(adjusted_helper['predictions'], 5))[0][0]
+    print('i is ',start_inx)
+    for i in range (start_inx,len(unadjusted_forecast)):
+
+
+       unadjusted_forecast[i]=unadjusted_forecast[i-1]+(0.05*unadjusted_forecast[i-1])
+
+
+
+    return unadjusted_forecast
+
+
+
+
+
+
+
 def forecastConfirmedCases(request):
     from sklearn.preprocessing import MinMaxScaler
     import pandas as pd
@@ -100,13 +147,12 @@ def forecastConfirmedCases(request):
         , batch_size=10
         , verbose=0
     )
-    print(predictions)
-    for i in predictions:
-        print(i)
+
     rounded_predictions = np.argmax(predictions, axis=-1).tolist()
     weather_occasion['predictions'] = rounded_predictions
 
-    print(weather_occasion)
+
+
 
     egypt = Uk.objects.all()
     date = []
@@ -141,9 +187,13 @@ def forecastConfirmedCases(request):
         current_batch = np.append(current_batch[:, 1:, :], [[current_pred]], axis=1)
 
     true_predictions = scaler.inverse_transform(test_predictions)
+
+
+
     x = {
         "Date": forecast_date,
-        "Forecast": sum(true_predictions.tolist(), [])
+        "Forecast": sum(true_predictions.tolist(), []),
+        "adjusted": adjustForecast(sum(true_predictions.tolist(), []),weather_occasion)
     }
     time.sleep(10)
     return JsonResponse(x)

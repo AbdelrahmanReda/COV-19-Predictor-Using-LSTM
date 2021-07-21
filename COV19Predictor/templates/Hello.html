@@ -245,6 +245,7 @@
         var actualDeath = []
         var actualRecovered = []
         var forecastConfirmed = []
+        var forecastConfirmedAdjusted = []
 
 
         for (let i = 520; i < egyptData.length; i++) {
@@ -256,20 +257,25 @@
 
         for (let i = 0; i < egyptForecastData['Date'].length; i++) {
             forecastConfirmed.push([new Date(egyptForecastData['Date'][i]).getTime(), Math.round(egyptForecastData['Forecast'][i])])
+             forecastConfirmedAdjusted.push([new Date(egyptForecastData['Date'][i]).getTime(), Math.round(egyptForecastData['adjusted'][i])])
         }
 
 
-        constructConfirmedGraph(actualConfirmed, forecastConfirmed)
-        populateForecastingTable(forecastConfirmed, '#confirmed-cases')
-        constructDeathGraph(actualDeath)
-        constructRecoveredGraph(actualRecovered)
+        constructConfirmedGraph(actualConfirmed, forecastConfirmed,forecastConfirmedAdjusted)
+        {#populateForecastingTable(forecastConfirmed, '#confirmed-cases')#}
+        {#constructDeathGraph(actualDeath)#}
+        {#constructRecoveredGraph(actualRecovered)#}
     }
 
     constructGraph()
 
-    function constructConfirmedGraph(observations, forecastData) {
-        console.log('forecat data is', forecastData)
-        Highcharts.chart('conf-container', configGraph("Actual Confiemed VS Forecast Confirmed Cases", observations, '#002147', "Actual Confiemed Cases", forecastData, '#0568db', "Forecast Confirmed Cases"))
+    function constructConfirmedGraph(observations, forecastData,forecastDataAdjusted) {
+
+        Highcharts.chart('conf-container', configGraph("Actual Confiemed VS Forecast Confirmed Cases",
+            observations, '#002147', "Actual Confiemed Cases",
+            forecastData, '#0568db', "Forecast Confirmed Cases",
+            forecastDataAdjusted,'#e56f06',"Adjusted Forecast Confirmed Cases"
+        ))
     }
 
     function constructDeathGraph(observations) {
@@ -281,7 +287,7 @@
     }
 
 
-    function configGraph(title, actualData, ActualDataSerierscolor, ActualDataSeriersName, forecastData, forecastDataSerierscolor, forecastDataSeriersName) {
+    function configGraph(title, actualData, ActualDataSerierscolor, ActualDataSeriersName, forecastData, forecastDataSerierscolor, forecastDataSeriersName,adjustedForecastData, adjsutedDorecastDataSerierscolor, adjustedForecastDataSeriersName) {
 
         config = {
             tooltip: {
@@ -333,7 +339,17 @@
                     name: forecastDataSeriersName,
                     data: forecastData,
                     color: forecastDataSerierscolor,
-                },]
+                },
+
+                {
+                    name: adjustedForecastDataSeriersName,
+                    data: adjustedForecastData,
+                    color: '#d44e10',
+                    dashstyle: 'Solid'
+                },
+
+
+            ]
             , plotOptions: {
                 series: {
                     compare: 'percent',
