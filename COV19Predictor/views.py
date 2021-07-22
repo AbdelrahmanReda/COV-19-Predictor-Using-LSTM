@@ -135,7 +135,7 @@ def adjustForecast(unadjusted_forecast,adjusted_helper):
 def forecastConfirmedCases(request):
     from sklearn.preprocessing import MinMaxScaler
     import pandas as pd
-    forecasting_model = load_model('./PredictionModelV3.h5')
+    forecasting_model = load_model('./PredictionModelV4.h5')
     classification_model = load_model('./COV19ClassificationModel.h5')
 
     weather_occasion = pd.read_csv(os.path.join(os.path.dirname(os.path.dirname(__file__)),'Egypt_Occasion_Waether_Data.csv'),index_col='Date')
@@ -152,8 +152,6 @@ def forecastConfirmedCases(request):
     weather_occasion['predictions'] = rounded_predictions
 
 
-
-
     egypt = Uk.objects.all()
     date = []
     confirmed = []
@@ -166,7 +164,7 @@ def forecastConfirmedCases(request):
     train_set = df_confirmed_country.iloc[:math.ceil(98 / 100 * len(df_confirmed_country))]
     test_set = df_confirmed_country.iloc[math.ceil(98 / 100 * len(df_confirmed_country)):]
     date_time_obj = test_set.index.tolist()[0]
-    n_input = 20
+    n_input = 45
     n_feature = 1
     scaler = MinMaxScaler()
     scaler.fit(train_set)

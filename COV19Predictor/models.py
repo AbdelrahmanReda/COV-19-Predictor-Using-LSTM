@@ -45,3 +45,7 @@ class egypt_prediction(models.Model):
     confirmed_cases = models.IntegerField(default=0)
     recovered_cases = models.IntegerField(default=0)
     death_cases = models.IntegerField(default=0)
+
+
+class system_countries(models.Model):
+    counrty_name = models.CharField
