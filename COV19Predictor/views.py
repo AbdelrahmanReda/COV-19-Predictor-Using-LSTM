@@ -204,6 +204,7 @@ def get_egypt_date(request):
 
 
 def isDatabaseUpdateStatus(date):
+    print(">?",date)
     querySet = metaData.objects.all()
     return True if date == querySet[0].Date else querySet[0].Date
 
@@ -339,21 +340,45 @@ def create_countries_table(request):
     return HttpResponse ("Done :D")
 
 
-def get_countries(request):
-    cursor = connection.cursor()
-    cursor.execute("select  * from  public.country_names")
-    insert_Countries(
-        cursor.fetchall(),
-        pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"),
-        pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"),
-        pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+def getLastDfData():
+    pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"),
+    df_confirmed_country = df_confirmed[df_confirmed["Country/Region"] == "Egypt"]
+    df_confirmed_country = pd.DataFrame(df_confirmed_country[df_confirmed_country.columns[4:]].sum(),columns=["confirmed"])
+    return df_confirmed_country.index.tolist()[-1]
 
-    )
+def get_countries(request):
+
+
+
+    date = isDatabaseUpdateStatus(datetime.strptime(getLastDfData(), '%m/%d/%y').date())
+
+
+    if date != True:
+        print("update now")
+
+        cursor = connection.cursor()
+        cursor.execute("select  * from  public.country_names")
+        insert_Countries(
+            cursor.fetchall(),
+            pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"),
+            pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"),
+            pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+            ,date,datetime.strptime(getLastDfData(), '%m/%d/%y').date()
+        )
+
+    else:
+        print("data up to date")
+
+
+
+
     return HttpResponse (":wD")
 
 
-def insert_Countries (countries,df_confirmed,df_deathes,df_recovred):
+def insert_Countries (countries,df_confirmed,df_deathes,df_recovred,start_date,last_date , initialize=None):
+
     for recoreded_country in countries:
+
         print(">> ",recoreded_country)
         arr = recoreded_country[1].split("/")
         country = arr[0]
@@ -361,24 +386,26 @@ def insert_Countries (countries,df_confirmed,df_deathes,df_recovred):
         if len(arr) != 1:
             Province_State = arr[1]
             country
+
         # get country confirmed data
         df_confirmed_country = df_confirmed[df_confirmed["Country/Region"] == country]
         if Province_State != '':
             df_confirmed_country = df_confirmed[df_confirmed["Province/State"] == Province_State]
         df_confirmed_country = pd.DataFrame(df_confirmed_country[df_confirmed_country.columns[4:]].sum(),columns=["confirmed"])
-        # get country deaths data
 
+        # get country deaths data
         df_deathes_country = df_deathes[df_deathes["Country/Region"] == country]
         if Province_State != '':
             df_deathes_country = df_deathes[df_deathes["Province/State"] == Province_State]
         df_deathes_country = pd.DataFrame(df_deathes_country[df_deathes_country.columns[4:]].sum(), columns=["deaths"])
-        # get country recovered data
 
+        # get country recovered data
         df_recovred_country = df_recovred[df_recovred["Country/Region"] == country]
         if Province_State != '':
             df_recovred_country = df_recovred[df_recovred["Province/State"] == Province_State]
         df_recovred_country = pd.DataFrame(df_recovred_country[df_recovred_country.columns[4:]].sum(),columns=["recovered"])
 
+        #reverse commulitives and add it
         df_confirmed_country = reverseCommulitive(df_confirmed_country, 'confirmed')
         df_deathes_country = reverseCommulitive(df_deathes_country, 'deaths')
         df_recovred_country = reverseCommulitive(df_recovred_country, 'recovered')
@@ -398,7 +425,17 @@ def insert_Countries (countries,df_confirmed,df_deathes,df_recovred):
         country_data['cumulative recovered'] = df_recovred_country['cumulative recovered'].tolist()
         country_data['recovered'] = df_recovred_country['recovered'].tolist()
 
+
+
+        country_data.index = country_data['Date']
+
+        start_date += timedelta(days=1)
+        country_data = country_data[start_date:]
+
+
+
         cursor = connection.cursor()
+
         for index, row in country_data.iterrows():
             cursor.execute(
                 "INSERT INTO  public.\""+recoreded_country[1]+ "\"VALUES  (DEFAULT ,%(date)s ,%(cumulative_confirmed_cases)s,%(confirmed_cases)s,%(cumulative_recovered_cases)s,%(recovered_cases)s,%(cumulative_death_cases)s,%(death_cases)s)",
@@ -412,7 +449,29 @@ def insert_Countries (countries,df_confirmed,df_deathes,df_recovred):
                     'cumulative_death_cases': row['cumulative deaths'],
                     'death_cases': row['deaths']
                 });
+        # break
+
+
+    update_lastupadate_meta_data(last_date)
 
 
 
-        time.sleep(0.75)
+
+
+
+
+def emptContriesTable(request):
+    cursor = connection.cursor()
+    cursor.execute("select  * from  public.country_names")
+    results = cursor.fetchall()
+    for result in results:
+        print(result[1])
+        cursor.execute("DELETE  FROM  public.\""+result[1]+"\" ;")
+    return HttpResponse("done. all countries table are initialized")
+
+    
+    
+
+
+
+
