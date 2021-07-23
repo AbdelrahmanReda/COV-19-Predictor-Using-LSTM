@@ -4,9 +4,7 @@ import datetime
 from django.db import models
 
 
-
 class Egypt(models.Model):
-
     Date = models.DateField(default=datetime.date.today)
     cumulative_confirmed_cases = models.IntegerField(default=0)
     confirmed_cases = models.IntegerField(default=0)
@@ -18,6 +16,15 @@ class Egypt(models.Model):
     is_occasion = models.BooleanField(default=False)
 
 
+class Uk(models.Model):
+    Date = models.DateField(default=datetime.date.today)
+    cumulative_confirmed_cases = models.IntegerField(default=0)
+    confirmed_cases = models.IntegerField(default=0)
+    cumulative_recovered_cases = models.IntegerField(default=0)
+    recovered_cases = models.IntegerField(default=0)
+    cumulative_death_cases = models.IntegerField(default=0)
+    death_cases = models.IntegerField(default=0)
+
 
 class Uk(models.Model):
     Date = models.DateField(default=datetime.date.today)
@@ -28,17 +35,10 @@ class Uk(models.Model):
     cumulative_death_cases = models.IntegerField(default=0)
     death_cases = models.IntegerField(default=0)
 
-class Uk(models.Model):
-    Date = models.DateField(default=datetime.date.today)
-    cumulative_confirmed_cases = models.IntegerField(default=0)
-    confirmed_cases = models.IntegerField(default=0)
-    cumulative_recovered_cases = models.IntegerField(default=0)
-    recovered_cases = models.IntegerField(default=0)
-    cumulative_death_cases = models.IntegerField(default=0)
-    death_cases = models.IntegerField(default=0)
 
-class metaData (models.Model):
+class metaData(models.Model):
     Date = models.DateField('2021-07-10')
+
 
 class egypt_prediction(models.Model):
     Date = models.DateField(default=datetime.date.today)
@@ -48,4 +48,8 @@ class egypt_prediction(models.Model):
 
 
 class system_countries(models.Model):
-    counrty_name = models.CharField
+    class Meta:
+        db_table = 'country_names'
+
+    country_name = models.CharField(default='no-country', max_length=50)
+

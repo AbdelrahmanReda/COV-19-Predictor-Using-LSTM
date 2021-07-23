@@ -216,7 +216,6 @@ def reverseCommulitive(df, column_name):
     dic = {column_name: 'cumulative ' + column_name}
     df.rename(columns=dic, inplace=True)
     df[column_name] = newReversedCommulitive
-    print(df)
     return df[1:]
 
 
@@ -282,3 +281,138 @@ def checkData(request):
         print("data up to date")
 
     return HttpResponse("Hello")
+
+
+
+def create_table(country_name):
+
+    cursor = connection.cursor()
+    cursor.execute(
+        "create table if not exists public.\""+country_name+
+        "\" ( id serial not null primary key ,"
+        "\"Date\" date not null,"
+        "cumulative_confirmed_cases integer not null,"
+        "confirmed_cases integer not null,"
+        "cumulative_recovered_cases integer not null,"
+        "recovered_cases integer not null,"
+        "cumulative_death_cases integer not null,"
+        "death_cases integer not null ) ");
+
+
+
+def fill_countries_table (country):
+    print(country)
+    cursor = connection.cursor()
+    cursor.execute("INSERT INTO public.country_names values (DEFAULT,%(country)s)",{'country':country})
+
+
+
+
+
+
+
+def create_countries_table(request):
+    import pandas as pd
+    import numpy as np
+    df = pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+
+
+    df_confirmed = pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+    df_deathes=pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+    df_confirmed=pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+    #to be continued
+    df = df.replace(np.nan, '', regex=True)
+    states = df['Province/State'].tolist()
+    countries = df['Country/Region'].tolist()
+    print(states[0] == '')
+
+    for i in range(len(states)):
+        if states[i] != '':
+            count_name = countries[i] + '/' + states[i]
+            fill_countries_table(count_name)
+            #create_table(count_name)
+
+        else:
+            count_name = countries[i] + states[i]
+            fill_countries_table(count_name)
+            #create_table(count_name)
+    return HttpResponse ("Done :D")
+
+
+def get_countries(request):
+    cursor = connection.cursor()
+    cursor.execute("select  * from  public.country_names")
+    insert_Countries(
+        cursor.fetchall(),
+        pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"),
+        pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"),
+        pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+
+    )
+    return HttpResponse (":wD")
+
+
+def insert_Countries (countries,df_confirmed,df_deathes,df_recovred):
+    for recoreded_country in countries:
+        print(">> ",recoreded_country)
+        arr = recoreded_country[1].split("/")
+        country = arr[0]
+        Province_State = ""
+        if len(arr) != 1:
+            Province_State = arr[1]
+            country
+        # get country confirmed data
+        df_confirmed_country = df_confirmed[df_confirmed["Country/Region"] == country]
+        if Province_State != '':
+            df_confirmed_country = df_confirmed[df_confirmed["Province/State"] == Province_State]
+        df_confirmed_country = pd.DataFrame(df_confirmed_country[df_confirmed_country.columns[4:]].sum(),columns=["confirmed"])
+        # get country deaths data
+
+        df_deathes_country = df_deathes[df_deathes["Country/Region"] == country]
+        if Province_State != '':
+            df_deathes_country = df_deathes[df_deathes["Province/State"] == Province_State]
+        df_deathes_country = pd.DataFrame(df_deathes_country[df_deathes_country.columns[4:]].sum(), columns=["deaths"])
+        # get country recovered data
+
+        df_recovred_country = df_recovred[df_recovred["Country/Region"] == country]
+        if Province_State != '':
+            df_recovred_country = df_recovred[df_recovred["Province/State"] == Province_State]
+        df_recovred_country = pd.DataFrame(df_recovred_country[df_recovred_country.columns[4:]].sum(),columns=["recovered"])
+
+        df_confirmed_country = reverseCommulitive(df_confirmed_country, 'confirmed')
+        df_deathes_country = reverseCommulitive(df_deathes_country, 'deaths')
+        df_recovred_country = reverseCommulitive(df_recovred_country, 'recovered')
+
+        country_data = pd.DataFrame()
+        dates = df_confirmed_country.index.tolist()
+        for i in range(len(dates)):
+            dates[i] = datetime.strptime(dates[i], '%m/%d/%y').date()
+        country_data['Date'] = dates
+
+        country_data['cumulative confirmed'] = df_confirmed_country['cumulative confirmed'].tolist()
+        country_data['confirmed'] = df_confirmed_country['confirmed'].tolist()
+
+        country_data['cumulative deaths'] = df_deathes_country['cumulative deaths'].tolist()
+        country_data['deaths'] = df_deathes_country['deaths'].tolist()
+
+        country_data['cumulative recovered'] = df_recovred_country['cumulative recovered'].tolist()
+        country_data['recovered'] = df_recovred_country['recovered'].tolist()
+
+        cursor = connection.cursor()
+        for index, row in country_data.iterrows():
+            cursor.execute(
+                "INSERT INTO  public.\""+recoreded_country[1]+ "\"VALUES  (DEFAULT ,%(date)s ,%(cumulative_confirmed_cases)s,%(confirmed_cases)s,%(cumulative_recovered_cases)s,%(recovered_cases)s,%(cumulative_death_cases)s,%(death_cases)s)",
+                {
+                    'date': row['Date'],
+                    'cumulative_confirmed_cases':row['cumulative confirmed'] ,
+                    'confirmed_cases': row['confirmed'],
+                    'cumulative_recovered_cases': row['cumulative recovered'],
+
+                    'recovered_cases': row['recovered'],
+                    'cumulative_death_cases': row['cumulative deaths'],
+                    'death_cases': row['deaths']
+                });
+
+
+
+        time.sleep(0.75)
