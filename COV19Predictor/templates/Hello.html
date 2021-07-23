@@ -262,9 +262,9 @@
 
         for (let i = 520; i < egyptData.length; i++) {
 
-            actualConfirmed.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['confirmed_cases']])
-            actualDeath.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['death_cases']])
-            actualRecovered.push([new Date(egyptData[i]['fields']['Date']).getTime(), egyptData[i]['fields']['recovered_cases']])
+            actualConfirmed.push([new Date(egyptData[i]['Date']).getTime(), egyptData[i]['confirmed_cases']])
+            actualDeath.push([new Date(egyptData[i]['Date']).getTime(), egyptData[i]['death_cases']])
+            actualRecovered.push([new Date(egyptData[i]['Date']).getTime(), egyptData[i]['recovered_cases']])
         }
 
         for (let i = 0; i < egyptForecastData['Date'].length; i++) {

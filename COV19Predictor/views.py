@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import time
 from django.core import serializers
@@ -107,9 +108,25 @@ def forecastConfirmedCases(request):
 
 
 def get_egypt_date(request):
-    uk = Uk.objects.all()
-    qs_json = serializers.serialize('json', uk)
-    return HttpResponse(qs_json, content_type='application/json')
+    countryName = "Egypt"
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM public.\"" + countryName + "\"")
+    resultset = cursor.fetchall()
+    result = []
+    for row in resultset:
+        x = {
+            "Date": str(row[1]),
+            "cumulative_confirmed_cases": row[2],
+            "confirmed_cases": row[3],
+            "cumulative_recovered_cases": row[4],
+            "recovered_cases": row[5],
+            "cumulative_death_cases": row[6],
+            "death_cases": row[7]
+
+        }
+        result.append(x)
+
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 def isDatabaseUpdateStatus(date):
@@ -197,14 +214,14 @@ def get_countries(request):
                 "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
             , date, datetime.strptime(get_last_dataframe_date(), '%m/%d/%y').date()
         )
-
     else:
         print("data up to date")
 
     return HttpResponse("")
 
 
-def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_date, last_date, initialize=None):
+def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_date=None, last_date=None,
+                     initialize=None):
     """
     function to populate countries statistics on its corresponding table
     @param countries: all system available countries
@@ -256,8 +273,8 @@ def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_dat
             dates[i] = datetime.strptime(dates[i], '%m/%d/%y').date()
 
         # construct the complete dataframe for country
-        country_data.index = country_data['Date']
         country_data['Date'] = dates
+        country_data.index = country_data['Date']
         country_data['cumulative confirmed'] = df_confirmed_country['cumulative confirmed'].tolist()
         country_data['confirmed'] = df_confirmed_country['confirmed'].tolist()
         country_data['cumulative deaths'] = df_deathes_country['cumulative deaths'].tolist()
@@ -265,14 +282,18 @@ def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_dat
         country_data['cumulative recovered'] = df_recovred_country['cumulative recovered'].tolist()
         country_data['recovered'] = df_recovred_country['recovered'].tolist()
 
-        start_date += timedelta(days=1)
+        # uncommetn the following line to use it in debugging
+        # country_data=country_data[:-10]
+
         # get the specified time frame rom dataframe
+        start_date += timedelta(days=1)
         country_data = country_data[start_date:]
 
         cursor = connection.cursor()
         for index, row in country_data.iterrows():
             cursor.execute(
-                "INSERT INTO  public.\"" + recoreded_country[1] + "\"VALUES  (DEFAULT ,%(date)s ,%(cumulative_confirmed_cases)s,%(confirmed_cases)s,%(cumulative_recovered_cases)s,%(recovered_cases)s,%(cumulative_death_cases)s,%(death_cases)s)",
+                "INSERT INTO  public.\"" + recoreded_country[
+                    1] + "\"VALUES  (DEFAULT ,%(date)s ,%(cumulative_confirmed_cases)s,%(confirmed_cases)s,%(cumulative_recovered_cases)s,%(recovered_cases)s,%(cumulative_death_cases)s,%(death_cases)s)",
                 {
                     'date': row['Date'],
                     'cumulative_confirmed_cases': row['cumulative confirmed'],
@@ -284,7 +305,6 @@ def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_dat
                 });
 
     update_last_update_meta_data(last_date)
-
 
 
 # dangerous method used for development purpose
