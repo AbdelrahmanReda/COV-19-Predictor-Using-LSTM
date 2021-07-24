@@ -16,7 +16,9 @@ urlpatterns = [
     path('getegypt/',views.get_egypt_date),
     path('create_countries_table',views.create_countries_table),
     path('getAllCountries',views.get_countries),
-    path('emptContriesTable', views.emptyCountriesTable)
+    path('emptContriesTable', views.emptyCountriesTable),
+    path('getCurrent' , views.getCurrentSituation, name='blog'),
+    path('getSystemCountries',views.get_countries_list)
 
 
 

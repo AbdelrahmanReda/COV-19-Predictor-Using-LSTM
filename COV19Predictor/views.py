@@ -12,6 +12,7 @@ from django.shortcuts import render
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import load_model
 from .models import metaData
+from .current_situation_views import *
 
 
 def getPrediction(request):
@@ -20,6 +21,9 @@ def getPrediction(request):
     @rtype: object
     """
     return render(request, 'Hello.html');
+
+def getCurrentSituation(request):
+    return  render(request,'current_situation.html')
 
 
 def find_ranges(lst, n=4, number=1):
@@ -121,6 +125,7 @@ def forecastConfirmedCases(request):
     }
 
     return JsonResponse(x)
+
 
 
 def get_egypt_date(request):
