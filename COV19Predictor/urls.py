@@ -5,7 +5,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.getPrediction),
+    path('', views.getPrediction,name='forecasting'),
 
     path('forecastConfirmedCases/',views.forecastConfirmedCases),
 
