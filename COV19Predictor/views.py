@@ -1,20 +1,17 @@
 import datetime
+import itertools as it
 import json
-import os
-import time
-from django.core import serializers
-from django.db import connection
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
 import math
+import os
 from datetime import timedelta, datetime
-import pandas as pd
 import numpy as np
+import pandas as pd
+from django.db import connection
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import load_model
-from .models import Uk
 from .models import metaData
-import itertools as it
 
 
 def getPrediction(request):
@@ -44,8 +41,27 @@ def adjustForecast(unadjusted_forecast, adjusted_helper):
     """
     start_inx = list(find_ranges(adjusted_helper['predictions'], 5))[0][0]
     for i in range(start_inx, len(unadjusted_forecast)):
-        unadjusted_forecast[i] = unadjusted_forecast[i - 1] + (0.05 * unadjusted_forecast[i - 1])
+        unadjusted_forecast[i] = unadjusted_forecast[i - 1] + (0.005 * unadjusted_forecast[i - 1])
     return unadjusted_forecast
+
+
+def getCountryData(country_name):
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM public.\"" + country_name + "\"")
+    result_set = cursor.fetchall()
+    result = []
+    for row in result_set:
+        x = {
+            "Date": str(row[1]),
+            "cumulative_confirmed_cases": row[2],
+            "confirmed_cases": row[3],
+            "cumulative_recovered_cases": row[4],
+            "recovered_cases": row[5],
+            "cumulative_death_cases": row[6],
+            "death_cases": row[7]
+        }
+        result.append(x)
+    return result
 
 
 def forecastConfirmedCases(request):
@@ -58,24 +74,25 @@ def forecastConfirmedCases(request):
     weather_occasion = pd.read_csv(
         os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Egypt_Occasion_Waether_Data.csv'), index_col='Date')
     predictions = classification_model.predict(
-        x=weather_occasion
-        , batch_size=10
-        , verbose=0
+        x=weather_occasion,
+        batch_size=10,
+        verbose=0
     )
     rounded_predictions = np.argmax(predictions, axis=-1).tolist()
     weather_occasion['predictions'] = rounded_predictions
-    egypt = Uk.objects.all()
+
+    result_set = getCountryData("Egypt")
     date = []
     confirmed = []
-    for row in egypt:
-        date.append(row.Date)
-        confirmed.append(row.confirmed_cases)
+    for i in range (len(result_set)):
+        date.append(result_set[i]['Date'])
+        confirmed.append(result_set[i]['confirmed_cases'])
     df_confirmed_country = pd.DataFrame(index=date)
     df_confirmed_country['confirmed'] = confirmed
     df_confirmed_country = df_confirmed_country[:-1]
-    train_set = df_confirmed_country.iloc[:math.ceil(98 / 100 * len(df_confirmed_country))]
-    test_set = df_confirmed_country.iloc[math.ceil(98 / 100 * len(df_confirmed_country)):]
-    date_time_obj = test_set.index.tolist()[0]
+    train_set = df_confirmed_country.iloc[:math.ceil(80 / 100 * len(df_confirmed_country))]
+    test_set = df_confirmed_country.iloc[math.ceil(80 / 100 * len(df_confirmed_country)):]
+    date_time_obj = datetime.strptime(test_set.index.tolist()[0],'%Y-%m-%d')
     n_input = 45
     n_feature = 1
     scaler = MinMaxScaler()
@@ -85,13 +102,12 @@ def forecastConfirmedCases(request):
     forecast_date = []
     first_eval_batch = scaled_train[-n_input:]
     current_batch = first_eval_batch.reshape((1, n_input, n_feature))
-
-    for i in range(len(test_set) + 21):
+    for i in range(len(test_set) + 45):
         # get the prediction value for the first batch
         current_pred = forecasting_model.predict(current_batch)[0]
         # append the prediction into the array
         test_predictions.append(current_pred)
-        forecast_date.append(str(date_time_obj))
+        forecast_date.append(str(date_time_obj.date()))
         date_time_obj += timedelta(days=1)
         # use the prediction to update the batch and remove the first value
         current_batch = np.append(current_batch[:, 1:, :], [[current_pred]], axis=1)
@@ -108,25 +124,8 @@ def forecastConfirmedCases(request):
 
 
 def get_egypt_date(request):
-    countryName = "Egypt"
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM public.\"" + countryName + "\"")
-    resultset = cursor.fetchall()
-    result = []
-    for row in resultset:
-        x = {
-            "Date": str(row[1]),
-            "cumulative_confirmed_cases": row[2],
-            "confirmed_cases": row[3],
-            "cumulative_recovered_cases": row[4],
-            "recovered_cases": row[5],
-            "cumulative_death_cases": row[6],
-            "death_cases": row[7]
+    return HttpResponse(json.dumps(getCountryData(request.GET.get('country'))), content_type='application/json')
 
-        }
-        result.append(x)
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 def isDatabaseUpdateStatus(date):

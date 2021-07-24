@@ -222,11 +222,9 @@
 
 
     $.fn.dataTable.Buttons.defaults.dom.button.className = 'btn btn-primary mtb-5';
-
-
     function getEgyptData() {
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("GET", 'http://localhost:8000/getegypt/', false); // false for synchronous request
+        xmlHttp.open("GET", 'http://localhost:8000/getegypt/?country=Egypt', false); // false for synchronous request
         xmlHttp.send(null);
         return JSON.parse(xmlHttp.response);
     }
@@ -259,9 +257,7 @@
         var forecastRecoveredAdjusted = []
 
 
-
-        for (let i = 520; i < egyptData.length; i++) {
-
+        for (let i = 400; i < egyptData.length; i++) {
             actualConfirmed.push([new Date(egyptData[i]['Date']).getTime(), egyptData[i]['confirmed_cases']])
             actualDeath.push([new Date(egyptData[i]['Date']).getTime(), egyptData[i]['death_cases']])
             actualRecovered.push([new Date(egyptData[i]['Date']).getTime(), egyptData[i]['recovered_cases']])
