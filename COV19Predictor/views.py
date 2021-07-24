@@ -38,14 +38,20 @@ def find_ranges(lst, n=4, number=1):
     return one_rebeats
 
 
-def adjustForecast(unadjusted_forecast, adjusted_helper):
-    """
-    function to perform forecast adjustment
-    @rtype: object
-    """
-    start_inx = list(find_ranges(adjusted_helper['predictions'], 5))[0][0]
-    for i in range(start_inx, len(unadjusted_forecast)):
-        unadjusted_forecast[i] = unadjusted_forecast[i - 1] + (0.005 * unadjusted_forecast[i - 1])
+def adjustForecast(unadjusted_forecast,adjusted_helper):
+
+    start_inx= list(find_ranges(adjusted_helper['predictions'], 5))[0][0]
+    print('LENGTH IS ', len(unadjusted_forecast))
+
+    LINEAR = []
+    for i in range (-1*int((len(unadjusted_forecast)+45)/2),int((len(unadjusted_forecast)+45)/2)):
+        LINEAR.append(i**2*-0.2)
+
+
+    print(LINEAR)
+
+    for i in range (len(unadjusted_forecast)):
+       unadjusted_forecast[i]=unadjusted_forecast[i]+LINEAR[i]+2000
     return unadjusted_forecast
 
 
