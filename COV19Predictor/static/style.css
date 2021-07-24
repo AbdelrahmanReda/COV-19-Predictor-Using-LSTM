@@ -84,7 +84,7 @@ body {
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
     color: #002147;
     background-color: unset;
-    border-bottom: 2px solid;
+    border-bottom: 3px solid;
 }
 
 .nav-pills .nav-link {
@@ -419,4 +419,12 @@ h1, h2, h3, h4, h5, h6, span {
 
     font-size: 13px;
     height: 32px;
+}
+
+#stat-table-body{
+    border: 1px solid #dee2e6;
+    border-radius: 15px;
+}
+#country-selector{
+    border-radius: 25px;
 }
