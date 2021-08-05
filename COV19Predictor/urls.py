@@ -18,7 +18,8 @@ urlpatterns = [
     path('getAllCountries',views.get_countries),
     path('emptContriesTable', views.emptyCountriesTable),
     path('getCurrent' , views.getCurrentSituation, name='blog'),
-    path('getSystemCountries',views.get_countries_list)
+    path('getSystemCountries',views.get_countries_list),
+    path('getCountries',views.get_system_countries)
 
 
 

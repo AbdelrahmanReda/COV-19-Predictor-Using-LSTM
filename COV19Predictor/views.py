@@ -1,18 +1,18 @@
 import datetime
 import itertools as it
-import json
+
 import math
 import os
+import time
 from datetime import timedelta, datetime
 import numpy as np
 import pandas as pd
-from django.db import connection
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import load_model
+
 from .models import metaData
 from .current_situation_views import *
+from django.shortcuts import render
 
 
 def getPrediction(request):
@@ -22,8 +22,9 @@ def getPrediction(request):
     """
     return render(request, 'Hello.html');
 
+
 def getCurrentSituation(request):
-    return  render(request,'current_situation.html')
+    return render(request, 'current_situation.html')
 
 
 def find_ranges(lst, n=4, number=1):
@@ -38,20 +39,18 @@ def find_ranges(lst, n=4, number=1):
     return one_rebeats
 
 
-def adjustForecast(unadjusted_forecast,adjusted_helper):
-
-    start_inx= list(find_ranges(adjusted_helper['predictions'], 5))[0][0]
+def adjustForecast(unadjusted_forecast, adjusted_helper):
+    start_inx = list(find_ranges(adjusted_helper['predictions'], 5))[0][0]
     print('LENGTH IS ', len(unadjusted_forecast))
 
     LINEAR = []
-    for i in range (-1*int((len(unadjusted_forecast)+45)/2),int((len(unadjusted_forecast)+45)/2)):
-        LINEAR.append(i**2*-0.2)
-
+    for i in range(-1 * int((len(unadjusted_forecast) + 45) / 2), int((len(unadjusted_forecast) + 45) / 2)):
+        LINEAR.append(i ** 2 * -0.08)
 
     print(LINEAR)
 
-    for i in range (len(unadjusted_forecast)):
-       unadjusted_forecast[i]=unadjusted_forecast[i]+LINEAR[i]+2000
+    for i in range(len(unadjusted_forecast)):
+        unadjusted_forecast[i] = unadjusted_forecast[i] + LINEAR[i] + 800
     return unadjusted_forecast
 
 
@@ -74,7 +73,25 @@ def getCountryData(country_name):
     return result
 
 
+def get_system_countries(request):
+    print(request.GET.get('country'))
+    country_name_pattern = request.GET.get('country') + '%'
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM public.country_names  WHERE country_name LIKE %(country)s",
+                   {'country': country_name_pattern})
+    result_set = cursor.fetchall()
+    result = []
+    for row in result_set:
+        result.append(row[1])
+
+    x = {
+        'countries': result
+    }
+    return JsonResponse(x)
+
+
 def forecastConfirmedCases(request):
+    from tensorflow.keras.models import load_model
     """
     function to perform basic forecasting for Egypt
     @rtype: object
@@ -94,7 +111,7 @@ def forecastConfirmedCases(request):
     result_set = getCountryData("Egypt")
     date = []
     confirmed = []
-    for i in range (len(result_set)):
+    for i in range(len(result_set)):
         date.append(result_set[i]['Date'])
         confirmed.append(result_set[i]['confirmed_cases'])
     df_confirmed_country = pd.DataFrame(index=date)
@@ -102,7 +119,7 @@ def forecastConfirmedCases(request):
     df_confirmed_country = df_confirmed_country[:-1]
     train_set = df_confirmed_country.iloc[:math.ceil(80 / 100 * len(df_confirmed_country))]
     test_set = df_confirmed_country.iloc[math.ceil(80 / 100 * len(df_confirmed_country)):]
-    date_time_obj = datetime.strptime(test_set.index.tolist()[0],'%Y-%m-%d')
+    date_time_obj = datetime.strptime(test_set.index.tolist()[0], '%Y-%m-%d')
     n_input = 45
     n_feature = 1
     scaler = MinMaxScaler()
@@ -133,10 +150,8 @@ def forecastConfirmedCases(request):
     return JsonResponse(x)
 
 
-
 def get_egypt_date(request):
     return HttpResponse(json.dumps(getCountryData(request.GET.get('country'))), content_type='application/json')
-
 
 
 def isDatabaseUpdateStatus(date):
@@ -175,26 +190,6 @@ def update_last_update_meta_data(date):
     return 1
 
 
-def create_table(country_name):
-    """
-    function to execute the actual SQL create statement for country table creation
-    @param:country_name
-    @rtype: object
-    """
-    cursor = connection.cursor()
-    cursor.execute(
-        "create table if not exists public.\"" + country_name +
-        "\" ( id serial not null primary key ,"
-        "\"Date\" date not null,"
-        "cumulative_confirmed_cases integer not null,"
-        "confirmed_cases integer not null,"
-        "cumulative_recovered_cases integer not null,"
-        "recovered_cases integer not null,"
-        "cumulative_death_cases integer not null,"
-        "death_cases integer not null ) "
-    );
-
-
 def get_last_dataframe_date():
     """
     function to return the last date in the county data frame > to compare it with last_update date
@@ -205,13 +200,12 @@ def get_last_dataframe_date():
     df_confirmed_country = df_confirmed[df_confirmed["Country/Region"] == "Egypt"]
     df_confirmed_country = pd.DataFrame(df_confirmed_country[df_confirmed_country.columns[4:]].sum(),
                                         columns=["confirmed"])
+    df_confirmed_country = df_confirmed_country[:-1]
     return df_confirmed_country.index.tolist()[-1]
 
 
-def get_countries(request):
-    date = isDatabaseUpdateStatus(datetime.strptime(get_last_dataframe_date(), '%m/%d/%y').date())
-    if date != True:
-        print("update now")
+def get_countries(request, debug=False):
+    if debug:
         cursor = connection.cursor()
         cursor.execute("select  * from  public.country_names")
         insert_Countries(
@@ -222,16 +216,31 @@ def get_countries(request):
                 "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"),
             pd.read_csv(
                 "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
-            , date, datetime.strptime(get_last_dataframe_date(), '%m/%d/%y').date()
+
         )
+
     else:
-        print("data up to date")
+        date = isDatabaseUpdateStatus(datetime.strptime(get_last_dataframe_date(), '%m/%d/%y').date())
+        if date != True:
+            print("update now")
+            cursor = connection.cursor()
+            cursor.execute("select  * from  public.country_names")
+            insert_Countries(
+                cursor.fetchall(),
+                pd.read_csv(
+                    "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"),
+                pd.read_csv(
+                    "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"),
+                pd.read_csv(
+                    "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+                , date)
+        else:
+            print("data up to date")
 
     return HttpResponse("")
 
 
-def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_date=None, last_date=None,
-                     initialize=None):
+def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_date=None):
     """
     function to populate countries statistics on its corresponding table
     @param countries: all system available countries
@@ -240,8 +249,8 @@ def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_dat
     @param df_recovered:
     @param start_date:
     @param last_date:
-    @param initialize:
     """
+    last_date=None
     for recoreded_country in countries:
         print(">> ", recoreded_country)
         arr = recoreded_country[1].split("/")
@@ -258,22 +267,30 @@ def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_dat
                                             columns=["confirmed"])
 
         # get country deaths data
-        df_deathes_country = df_deaths[df_deaths["Country/Region"] == country]
+        df_deaths_country = df_deaths[df_deaths["Country/Region"] == country]
         if Province_State != '':
-            df_deathes_country = df_deaths[df_deaths["Province/State"] == Province_State]
-        df_deathes_country = pd.DataFrame(df_deathes_country[df_deathes_country.columns[4:]].sum(), columns=["deaths"])
+            df_deaths_country = df_deaths[df_deaths["Province/State"] == Province_State]
+        df_deaths_country = pd.DataFrame(df_deaths_country[df_deaths_country.columns[4:]].sum(), columns=["deaths"])
 
         # get country recovered data
-        df_recovred_country = df_recovered[df_recovered["Country/Region"] == country]
+        df_recovered_country = df_recovered[df_recovered["Country/Region"] == country]
         if Province_State != '':
-            df_recovred_country = df_recovered[df_recovered["Province/State"] == Province_State]
-        df_recovred_country = pd.DataFrame(df_recovred_country[df_recovred_country.columns[4:]].sum(),
-                                           columns=["recovered"])
+            df_recovered_country = df_recovered[df_recovered["Province/State"] == Province_State]
+        df_recovered_country = pd.DataFrame(df_recovered_country[df_recovered_country.columns[4:]].sum(),
+                                            columns=["recovered"])
 
-        # reverse commulitives and add it
+        # reverse communities stats and add it
         df_confirmed_country = reverseCumulative(df_confirmed_country, 'confirmed')
-        df_deathes_country = reverseCumulative(df_deathes_country, 'deaths')
-        df_recovred_country = reverseCumulative(df_recovred_country, 'recovered')
+        df_deaths_country = reverseCumulative(df_deaths_country, 'deaths')
+        df_recovered_country = reverseCumulative(df_recovered_country, 'recovered')
+
+        """
+        for safety purpose truncate the last row as it could not have up-to-date stats
+        """
+
+        df_confirmed_country = df_confirmed_country[:-1]
+        df_deaths_country = df_deaths_country[:-1]
+        df_recovered_country = df_recovered_country[:-1]
 
         country_data = pd.DataFrame()
 
@@ -287,23 +304,28 @@ def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_dat
         country_data.index = country_data['Date']
         country_data['cumulative confirmed'] = df_confirmed_country['cumulative confirmed'].tolist()
         country_data['confirmed'] = df_confirmed_country['confirmed'].tolist()
-        country_data['cumulative deaths'] = df_deathes_country['cumulative deaths'].tolist()
-        country_data['deaths'] = df_deathes_country['deaths'].tolist()
-        country_data['cumulative recovered'] = df_recovred_country['cumulative recovered'].tolist()
-        country_data['recovered'] = df_recovred_country['recovered'].tolist()
+        country_data['cumulative deaths'] = df_deaths_country['cumulative deaths'].tolist()
+        country_data['deaths'] = df_deaths_country['deaths'].tolist()
+        country_data['cumulative recovered'] = df_recovered_country['cumulative recovered'].tolist()
+        country_data['recovered'] = df_recovered_country['recovered'].tolist()
+        last_date = dates[-1]
 
-        # uncommetn the following line to use it in debugging
-        # country_data=country_data[:-10]
+        # uncomment the following line to use it in debugging
+        # country_data=country_data[:-20]
 
         # get the specified time frame rom dataframe
-        start_date += timedelta(days=1)
-        country_data = country_data[start_date:]
+        temp = start_date
 
+        if (start_date != None):
+            start_date += timedelta(days=1)
+            country_data = country_data[start_date:]
         cursor = connection.cursor()
+        start_date = temp
+
+
         for index, row in country_data.iterrows():
             cursor.execute(
-                "INSERT INTO  public.\"" + recoreded_country[
-                    1] + "\"VALUES  (DEFAULT ,%(date)s ,%(cumulative_confirmed_cases)s,%(confirmed_cases)s,%(cumulative_recovered_cases)s,%(recovered_cases)s,%(cumulative_death_cases)s,%(death_cases)s)",
+                "INSERT INTO  public.\"" + recoreded_country[1] + "\"VALUES  (DEFAULT ,%(date)s ,%(cumulative_confirmed_cases)s,%(confirmed_cases)s,%(cumulative_recovered_cases)s,%(recovered_cases)s,%(cumulative_death_cases)s,%(death_cases)s)",
                 {
                     'date': row['Date'],
                     'cumulative_confirmed_cases': row['cumulative confirmed'],
@@ -313,8 +335,30 @@ def insert_Countries(countries, df_confirmed, df_deaths, df_recovered, start_dat
                     'cumulative_death_cases': row['cumulative deaths'],
                     'death_cases': row['deaths']
                 });
-
+        print(recoreded_country," updated successfully")
+        break
     update_last_update_meta_data(last_date)
+
+
+# dangerous method used for table construction for one time
+def create_table(country_name):
+    """
+    function to execute the actual SQL create statement for country table creation
+    @param:country_name
+    @rtype: object
+    """
+    cursor = connection.cursor()
+    cursor.execute(
+        "CREATE table if not exists public.\"" + country_name +
+        "\" ( id serial not null primary key ,"
+        "\"Date\" date not null,"
+        "cumulative_confirmed_cases integer not null,"
+        "confirmed_cases integer not null,"
+        "cumulative_recovered_cases integer not null,"
+        "recovered_cases integer not null,"
+        "cumulative_death_cases integer not null,"
+        "death_cases integer not null ) "
+    );
 
 
 # dangerous method used for development purpose
@@ -336,7 +380,6 @@ def emptyCountriesTable(request):
 # dangerous method used for development purpose
 def create_countries_table(request):
     """
-
     function to create and initialize DB table for all countries
     uncomment create_table() method to create table
     uncomment fill_countries_table() to add the newly added country to list of viable countries
@@ -346,8 +389,7 @@ def create_countries_table(request):
     """
     import pandas as pd
     import numpy as np
-    df = pd.read_csv(
-        "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
     df = df.replace(np.nan, '', regex=True)
     states = df['Province/State'].tolist()
     countries = df['Country/Region'].tolist()

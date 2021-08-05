@@ -307,9 +307,12 @@
         setCumulativeCasesStatistics(resultData[i - 1]['cumulative_confirmed_cases'], resultData[i - 1]['cumulative_death_cases'], resultData[i - 1]['cumulative_recovered_cases'])
 
     }
+
     $("#country-selector").on('change', function () {
 
         populateTable($(this).val())
+         populateGraph($(this).val())
+
           });
 
     function setNewCasesStatistics(newConfirmed, NewDeath, newRecovered) {
@@ -327,6 +330,12 @@
     }
 
     populateCountrySelector()
+
+    function populateGraph() {
+        
+    }
+
+
     populateTable("Egypt")
 
 
